@@ -6,20 +6,6 @@ from vispy import app, scene
 from vispy.scene import ViewBox
 from vispy.scene.visuals import Markers
 import numpy as np
-import sys
-from loguru import logger
-
-logger.remove()
-logger.add(sys.stdout,
-           format="<fg #b28774>{time:YYYY-MM-DD HH:mm:ss:SSS ZZ}</> <yellow>|</>"
-                  " <lvl>{level: <8}</> "
-                  "<yellow>|</> <blue>{process.name: ^12} {file} {line}</> <yellow>-</> <lvl>{message}</>",
-           diagnose=True)
-
-logger.level('INFO', color='<fg #fef5ed>')
-logger.level('SUCCESS', color='<fg #79d70f>')
-logger.level('WARNING', color='<fg #fd811e>')
-logger.level('ERROR', color='<fg #ed254e>')
 
 
 class Visualizer(Process):

@@ -3,7 +3,7 @@ from pathlib import Path
 import torch.nn
 from torch.optim import SGD
 
-from dataset.ColumbiaDataset import ColumbiaDataset
+from dataset import ColumbiaDataset
 from models.mlp import MLP
 from utils.base_config import BaseConfig
 
