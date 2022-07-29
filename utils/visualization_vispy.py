@@ -1,12 +1,15 @@
 import copy
 import queue
+from itertools import product
 from multiprocessing import Queue, Process
 from multiprocessing import Barrier
 import torch
+import vispy.visuals
 from vispy import app, scene
 from vispy.scene import ViewBox
 from vispy.scene.visuals import Markers
 import numpy as np
+from vispy.visuals import LineVisual
 
 
 class Visualizer(Process):
@@ -21,6 +24,7 @@ class Visualizer(Process):
 
         self.color_f = True
         self.gt_f = True
+        self.ref_f = True
 
         self.last_data = None
 
@@ -49,6 +53,14 @@ class Visualizer(Process):
 
         self.scatter = Markers(parent=vb.scene)
 
+        v = np.array(list((product([-0.5, 0.5], repeat=3))))
+        e = np.arange(0, 8).reshape(-1, 2)
+        e = np.concatenate([e, np.array([[0, 2], [0, 4], [2, 6], [4, 6]])])
+        e = np.concatenate([e, np.array([[0, 2], [0, 4], [2, 6], [4, 6]]) + 1])
+        self.cube = scene.Line(v, color='orange', connect=e, width=10, parent=vb.scene)
+
+        self.ref = scene.XYZAxis(parent=vb.scene, width=10)
+
         # logger.debug('Gui built successfully')
 
     def dispatch(self, event):
@@ -56,6 +68,15 @@ class Visualizer(Process):
             self.color_f = not self.color_f
         elif event.text == 'g':
             self.gt_f = not self.gt_f
+        elif event.text == 'r':
+            self.ref_f = not self.ref_f
+            if self.ref_f:
+                self.cube.set_data(width=10)
+                self.ref.set_data(width=10)
+            else:
+                self.cube.set_data(width=0)
+                self.ref.set_data(width=0)
+            return
         else:
             return
 
@@ -101,6 +122,8 @@ class Visualizer(Process):
 
                 self.scatter.set_data(pc * np.array([1, -1, 1]), edge_color=colors,
                                       face_color=colors, size=5)
+
+                # self.lines.set_data(self.lines.pos, connect=np.arange(0, 8).reshape(-1, 2), color=[1, 0, 0, 0])
 
     def update(self, data):
         if not self.setup_f:
