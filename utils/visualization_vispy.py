@@ -19,6 +19,7 @@ class Visualizer(Process):
         self.queue_in = Queue(1)
 
         self.color_f = True
+        self.last_data = None
 
     def run(self):
         self.build_gui()
@@ -40,7 +41,6 @@ class Visualizer(Process):
         vb = ViewBox()
         vb = self.grid.add_widget(vb, row=0, col=0, row_span=1, col_span=1)
 
-
         vb.camera = scene.TurntableCamera(elevation=0, azimuth=0, distance=1)
         vb.border_color = (0.5, 0.5, 0.5, 1)
 
@@ -52,10 +52,15 @@ class Visualizer(Process):
         if event.text == 'c':
             self.color_f = not self.color_f
 
+            if self.last_data is not None:
+                if self.queue_in.empty():
+                    self.queue_in.put(self.last_data)
+
     def on_timer(self, _):
 
         if not self.queue_in.empty():
             data = self.queue_in.get()
+            self.last_data = data
 
             points, predictions, labels = data['points'], data['predictions'], data['labels']
 

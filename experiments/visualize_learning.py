@@ -52,7 +52,8 @@ def main():
 
             range.set_postfix(loss=loss.item())
 
-        viewer.stop()
+        viewer.join()
+        # viewer.stop()
 
 
 if __name__ == '__main__':

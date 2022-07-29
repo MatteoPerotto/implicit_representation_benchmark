@@ -1,1 +1,1 @@
-from .cfg_mlp_wrench import Config
+from .cfg_mlp_airplane import Config
