@@ -1,4 +1,5 @@
 import copy
+import queue
 from multiprocessing import Queue, Process
 from multiprocessing import Barrier
 import torch
@@ -19,6 +20,8 @@ class Visualizer(Process):
         self.queue_in = Queue(1)
 
         self.color_f = True
+        self.gt_f = True
+
         self.last_data = None
 
     def run(self):
@@ -51,10 +54,16 @@ class Visualizer(Process):
     def dispatch(self, event):
         if event.text == 'c':
             self.color_f = not self.color_f
+        elif event.text == 'g':
+            self.gt_f = not self.gt_f
+        else:
+            return
 
-            if self.last_data is not None:
-                if self.queue_in.empty():
-                    self.queue_in.put(self.last_data)
+        if self.last_data is not None:
+            try:
+                self.queue_in.put(self.last_data, block=False)
+            except queue.Full:
+                return
 
     def on_timer(self, _):
 
@@ -69,9 +78,12 @@ class Visualizer(Process):
             # idxs = labels == 1
 
             positive = points[positive_idxs].cpu().numpy()
-            false_negative = points[false_negative_idxs].cpu().numpy()
 
-            pc = np.concatenate([positive, false_negative], axis=0)
+            if self.gt_f:
+                false_negative = points[false_negative_idxs].cpu().numpy()
+                pc = np.concatenate([positive, false_negative], axis=0)
+            else:
+                pc = positive
 
             if pc.shape[0] != 0:
                 if self.color_f:
@@ -81,9 +93,11 @@ class Visualizer(Process):
                 else:
                     p_colors = np.array([[0, 0, 1]]).repeat(positive.shape[0], 0)
 
-                fn_colors = np.array([[1, 1, 0]]).repeat(false_negative.shape[0], 0)
-
-                colors = np.concatenate([p_colors, fn_colors], axis=0)
+                if self.gt_f:
+                    fn_colors = np.array([[1, 1, 0]]).repeat(false_negative.shape[0], 0)
+                    colors = np.concatenate([p_colors, fn_colors], axis=0)
+                else:
+                    colors = p_colors
 
                 self.scatter.set_data(pc * np.array([1, -1, 1]), edge_color=colors,
                                       face_color=colors, size=5)

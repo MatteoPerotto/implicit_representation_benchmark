@@ -15,7 +15,7 @@ class Config(BaseConfig):
 
         class Params(BaseConfig):
             num_layers = 2
-            layers_dim = [32] * 2
+            layers_dim = [96] * 2
 
     class Data(BaseConfig):
         input_dimension = 16384
