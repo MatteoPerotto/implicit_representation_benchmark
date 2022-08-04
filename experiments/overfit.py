@@ -21,7 +21,7 @@ from utils.scatter import pcs_to_plotly
 
 
 def main():
-    task = Task.init(project_name="implicit-rep", task_name="overfit-random-input-each-epoch")
+    task = Task.init(project_name="implicit-rep", task_name="changed-input-half-random")
     task.connect(Config.to_dict())
     task.connect_configuration(Config.to_dict())
     logger = task.get_logger()
