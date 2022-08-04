@@ -1,13 +1,13 @@
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 import numpy as np
 from plotly.graph_objs import Scatter3d, Figure
 
 
-def pcs_to_plotly(pcs: Union[np.ndarray, list[np.ndarray]],
-                  colormaps: Optional[Union[str, list[str], list[float], list[list[float]]]] = None,
-                  colors: Optional[Union[np.ndarray, list[np.ndarray]]] = None,
-                  names: Optional[Union[str, list[str]]] = None):
+def pcs_to_plotly(pcs: Union[np.ndarray, List[np.ndarray]],
+                  colormaps: Optional[Union[str, List[str], List[float], List[List[float]]]] = None,
+                  colors: Optional[Union[np.ndarray, List[np.ndarray]]] = None,
+                  names: Optional[Union[str, List[str]]] = None):
     """
     Takes a list of point clouds represented as numpy arrays and return a plotly figure
     representing them.
