@@ -21,14 +21,14 @@ def sample_point_cloud_pc(pc, n_points=8192, dist=None, noise_rate=0.1, toleranc
 
     n_uniform = int(n_points * dist[0])
     n_noise = int(n_points * dist[1])
-    n_surface = n_points - (n_uniform + n_noise)
+    n_surface = int(n_points * dist[2])
 
     points_uniform = torch.rand(pc.shape[0], n_uniform, 3, device=pc.device) - 0.5
 
     idx = torch.tensor(np.random.choice(pc.shape[1], n_noise, replace=True if pc.shape[1] < n_noise else False), device=pc.device, dtype=torch.long)
     points_noisy = pc[:, idx, :] + torch.normal(0, noise_rate, (pc.shape[0], n_noise, 3), device=pc.device)
 
-    idx = torch.tensor(np.random.choice(pc.shape[1], n_surface, replace=True if pc.shape[1] < n_noise else False), device=pc.device, dtype=torch.long)
+    idx = torch.tensor(np.random.choice(pc.shape[1], n_surface, replace=True if pc.shape[1] < n_surface else False), device=pc.device, dtype=torch.long)
     points_surface = copy.deepcopy(pc[:, idx, :])
 
     points = torch.cat([points_uniform, points_noisy, points_surface], dim=1)
@@ -39,7 +39,7 @@ def sample_point_cloud_pc(pc, n_points=8192, dist=None, noise_rate=0.1, toleranc
 
     elif tolerance == 0:
         labels = [False] * (n_uniform + n_noise) + [True] * n_surface
-        labels = torch.tensor(labels, dtype=torch.float, device=pc.device).tile(pc.shape[0], 1)
+        labels = torch.tensor(labels, dtype=torch.bool, device=pc.device).tile(pc.shape[0], 1)
 
     return points, labels
 

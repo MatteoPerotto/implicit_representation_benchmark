@@ -13,6 +13,8 @@ import chamfer
 class ChamferFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, xyz1, xyz2):
+        xyz1, xyz2 = xyz1.contiguous(), xyz2.contiguous()
+
         dist1, dist2, idx1, idx2 = chamfer.forward(xyz1, xyz2)
         ctx.save_for_backward(xyz1, xyz2, idx1, idx2)
 
@@ -36,6 +38,8 @@ class ChamferDistanceL2(torch.nn.Module):
         self.ignore_zeros = ignore_zeros
 
     def forward(self, xyz1, xyz2):
+        xyz1, xyz2 = xyz1.contiguous(), xyz2.contiguous()
+
         batch_size = xyz1.size(0)
         if batch_size == 1 and self.ignore_zeros:
             non_zeros1 = torch.sum(xyz1, dim=2).ne(0)
@@ -54,6 +58,8 @@ class ChamferDistanceL2_split(torch.nn.Module):
         self.ignore_zeros = ignore_zeros
 
     def forward(self, xyz1, xyz2):
+        xyz1, xyz2 = xyz1.contiguous(), xyz2.contiguous()
+
         batch_size = xyz1.size(0)
         if batch_size == 1 and self.ignore_zeros:
             non_zeros1 = torch.sum(xyz1, dim=2).ne(0)
@@ -77,6 +83,8 @@ class ChamferDistanceL1(torch.nn.Module):
         self.ignore_zeros = ignore_zeros
 
     def forward(self, xyz1, xyz2):
+        xyz1, xyz2 = xyz1.contiguous(), xyz2.contiguous()
+
         batch_size = xyz1.size(0)
         if batch_size == 1 and self.ignore_zeros:
             non_zeros1 = torch.sum(xyz1, dim=2).ne(0)

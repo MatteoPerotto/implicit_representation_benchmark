@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch.nn
 from torch.optim import SGD
 
@@ -7,25 +9,26 @@ from utils.base_config import BaseConfig
 
 
 class Config(BaseConfig):
+    name = Path(__file__).parts[-1]
 
     class Model(BaseConfig):
         architecture = MLP
 
         class Params(BaseConfig):
-            num_layers = 2
-            layers_dim = [96] * 2
+            num_layers = 16
+            layers_dim = [96] * 16
 
     class Data(BaseConfig):
-        input_dimension = 16384
+        input_dimension = 16384 * 2
         split = [0.1, 0.4, 0.5]
         noise_rate = 0.1
-        tolerance = 0.005
+        tolerance = 0.001
 
         class DataSet(BaseConfig):
             dataset = ShapeNetDataset
 
             class Params(BaseConfig):
-                root = '../pcr/data/PCN'
+                root = './data/PCN'
                 split = 'PCN.json'
                 subset = 'train'
                 length = None
@@ -42,18 +45,25 @@ class Config(BaseConfig):
     class Train(BaseConfig):
         loss_fn = torch.nn.BCEWithLogitsLoss()
         device = 'cuda'
-        epochs = int(1e4)
+        epochs = int(50_000)
 
         class Optim(BaseConfig):
             optim = SGD
 
             class Params(BaseConfig):
-                lr = 0.01
+                lr = 0.0001
                 momentum = 0.9
 
 
 if __name__ == '__main__':
-    Config.init()
+    import json
 
-    from experiments import visualize_learning
-    visualize_learning.main()
+    Config.init()
+    # with open('configs/current.json', 'w') as fp:
+    #     json.dump(Config.to_dict(), fp)
+    #
+    # print(f'Configuration {Config.name} set as active. \n'
+    #       f'Re-run the script if you make any modification.')
+
+    from experiments import overfit
+    overfit.main()

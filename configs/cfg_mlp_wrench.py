@@ -9,6 +9,7 @@ from utils.base_config import BaseConfig
 
 
 class Config(BaseConfig):
+    name = Path(__file__).parts[-1]
 
     class Model(BaseConfig):
         architecture = MLP
@@ -52,6 +53,8 @@ class Config(BaseConfig):
             class Params(BaseConfig):
                 lr = 0.01
                 momentum = 0.9
+
+
 
 
 if __name__ == '__main__':
