@@ -54,7 +54,8 @@ class Config(BaseConfig):
                 lr = 0.01
                 momentum = 0.9
 
-
+    class Logger(BaseConfig):
+        active = False
 
 
 if __name__ == '__main__':

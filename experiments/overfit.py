@@ -12,9 +12,12 @@ from torch.utils.data import DataLoader
 from tqdm import trange
 
 from configs import Config
-from dataset.utils import sample_point_cloud_pc
+from dataset.utils import sample_point_cloud_pc, check_occupancy
 
-from clearml import Task, OutputModel
+if Config.Logger.active:
+    from clearml import Task
+else:
+    from utils.noop import NoOp as Task
 
 from metrics.chamfer_dist import ChamferDistanceL1
 from utils.scatter import pcs_to_plotly
@@ -76,7 +79,7 @@ def main():
                                 names=['positive', 'negative'])
             logger.report_plotly("Point Clouds", "input points", fig)
 
-        if i % 1000 == 0 or i == Train.epochs - 1:
+        if (i + 1) % 1000 == 0:
             positive_idxs = torch.sigmoid(predictions) > 0.7
             if torch.all(~positive_idxs):
                 positive_idxs[:, 0] = True
@@ -86,8 +89,11 @@ def main():
             logger.report_scalar('Loss', 'loss', loss.item(), i)
             logger.report_scalar('Chamfer', 'chamfer', chamfer.item() * 100, i)
 
-        if i % 5000 == 0 or i == Train.epochs - 1:
+        if (i + 1) % 5000 == 0:
             with torch.no_grad():
+                ###################################
+                ### Log classification of the input
+
                 positive_idxs = torch.sigmoid(predictions) > 0.7
 
                 tp_idxs = positive_idxs & labels
@@ -99,12 +105,26 @@ def main():
 
                 chamfer = metric(x[positive_idxs].unsqueeze(0), x[labels].unsqueeze(0))
 
-                # pred_pc = np.concatenate([(pred_pc.cpu().numpy()), np.zeros([1, 3])])
                 pcs = [pc.cpu().numpy() for pc in [x[fn_idxs], x[tp_idxs], x[fp_idxs]]]
                 fig = pcs_to_plotly(pcs, colormaps=[[255, 255, 0], [0, 255, 0], [255, 0, 0]],
                                     names=['false negatives', 'true_positives', 'false_positives'])
 
-            logger.report_plotly("Point Clouds", "precision_recall", fig, i)
+                logger.report_plotly("Point Clouds", "precision_recall", fig, i)
+
+                ###################################
+                ### Log decoded point cloud
+                final_pc, prob = model.to_pc(itr=20, thr=0.85, num_points=8192 * 2)
+                final_pc = final_pc.unsqueeze(0)
+
+                labels = check_occupancy(gt, final_pc, 0.001)  # points of the reconstruction close enough to gt
+                recall_labels = ~check_occupancy(final_pc, gt, 0.001) # points of gt not close to reconstruction
+
+                pcs = [pc.squeeze().cpu().numpy() for pc in [final_pc[labels], final_pc[~labels], gt[recall_labels]]]
+                fig = pcs_to_plotly(pcs, colormaps=[[0, 255, 0], [255, 0, 0], [0, 0, 255]],
+                                    names=['right', 'wrong', 'missed'], colors=[prob.cpu().numpy(), None])
+
+                logger.report_plotly("Point Clouds", "reconstruction", fig)
+                logger.report_scalar('Chamfer', 'real', metric(final_pc, gt) * 100, i)
 
             torch.save(model.state_dict(), ckpt_dir / 'latest.pth')
             if best < chamfer:
@@ -113,12 +133,6 @@ def main():
 
         range.set_postfix(loss=loss.item())
 
-    final_pc, prob = model.to_pc(itr=20, thr=0.85, num_points=8192 * 2)
-
-    fig = pcs_to_plotly([final_pc.cpu().numpy(), gt.squeeze().cpu().numpy()], colormaps=['Viridis', [255, 255, 0]],
-                        names=['reconstruction', 'ground truth'], colors=[prob.cpu().numpy(), None])
-    logger.report_plotly("Point Clouds", "reconstruction", fig)
-    logger.report_scalar('Chamfer', 'final', metric(final_pc.unsqueeze(0), gt) * 100, i)
 
 
 if __name__ == '__main__':
