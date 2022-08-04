@@ -20,7 +20,7 @@ class Config(BaseConfig):
 
     class Data(BaseConfig):
         input_dimension = 16384 * 2
-        split = [0.1, 0.4, 0.5]
+        split = [0.5, 0.0, 0.5]
         noise_rate = 0.1
         tolerance = 0.001
 
