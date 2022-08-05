@@ -75,13 +75,6 @@ def main():
         loss.backward()
         optimizer.step()
 
-        # Logging
-        # if i == 0:
-        #     fig = pcs_to_plotly([x[labels].cpu().numpy(), x[~labels].cpu().numpy()],
-        #                         colormaps=[[0, 255, 0], [255, 0, 0]],
-        #                         names=['positive', 'negative'])
-        #     logger.report_plotly("Point Clouds", "input points", fig)
-
         if (i + 1) % 1000 == 0:
             positive_idxs = torch.sigmoid(predictions) > 0.7
             if torch.all(~positive_idxs):
@@ -119,10 +112,11 @@ def main():
                 final_pc, prob = model.to_pc(itr=20, thr=0.85, num_points=8192 * 2)
                 final_pc = final_pc.unsqueeze(0)
 
-                labels = check_occupancy(gt, final_pc, 0.001)  # points of the reconstruction close enough to gt
+                precision_labels = check_occupancy(gt, final_pc, 0.001)  # points of the reconstruction close enough to gt
                 recall_labels = ~check_occupancy(final_pc, gt, 0.001) # points of gt not close to reconstruction
 
-                pcs = [pc.squeeze().cpu().numpy() for pc in [final_pc[labels], final_pc[~labels], gt[recall_labels]]]
+                pcs = [pc.squeeze().cpu().numpy() for pc in [final_pc[precision_labels], final_pc[~precision_labels],
+                                                             gt[recall_labels]]]
                 fig = pcs_to_plotly(pcs, colormaps=[[0, 255, 0], [255, 0, 0], [0, 0, 255]],
                                     names=['right', 'wrong', 'missed'], colors=[prob.cpu().numpy(), None])
 
