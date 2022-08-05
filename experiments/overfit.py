@@ -76,11 +76,11 @@ def main():
         optimizer.step()
 
         # Logging
-        if i == 0:
-            fig = pcs_to_plotly([x[labels].cpu().numpy(), x[~labels].cpu().numpy()],
-                                colormaps=[[0, 255, 0], [255, 0, 0]],
-                                names=['positive', 'negative'])
-            logger.report_plotly("Point Clouds", "input points", fig)
+        # if i == 0:
+        #     fig = pcs_to_plotly([x[labels].cpu().numpy(), x[~labels].cpu().numpy()],
+        #                         colormaps=[[0, 255, 0], [255, 0, 0]],
+        #                         names=['positive', 'negative'])
+        #     logger.report_plotly("Point Clouds", "input points", fig)
 
         if (i + 1) % 1000 == 0:
             positive_idxs = torch.sigmoid(predictions) > 0.7
@@ -128,6 +128,13 @@ def main():
 
                 logger.report_plotly("Point Clouds", "reconstruction", fig)
                 logger.report_scalar('Chamfer', 'real', metric(final_pc, gt) * 100, i)
+
+                ###################################
+                ### Log input
+                fig = pcs_to_plotly([x[labels].cpu().numpy(), x[~labels].cpu().numpy()],
+                                    colormaps=[[0, 255, 0], [255, 0, 0]],
+                                    names=['positive', 'negative'])
+                logger.report_plotly("Point Clouds", "input points", fig)
 
             torch.save(model.state_dict(), ckpt_dir / 'latest.pth')
             if best < chamfer:
