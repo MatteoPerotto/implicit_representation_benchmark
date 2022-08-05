@@ -58,7 +58,7 @@ class Config(BaseConfig):
     class Logger(BaseConfig):
         active = True
         project = 'implicit-rep'
-        task = 'changed-input-half-random'
+        task = 'input0.5-0.0-random'
 
 
 if __name__ == '__main__':

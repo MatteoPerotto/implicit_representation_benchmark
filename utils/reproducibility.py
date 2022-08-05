@@ -14,7 +14,7 @@ def make_reproducible(seed):
     random.seed(seed)  # Python random module.
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
-    torch.use_deterministic_algorithms(True)
+    # torch.use_deterministic_algorithms(True) # can cause bugs
 
 
 def get_generator(seed):
