@@ -10,6 +10,7 @@ from utils.base_config import BaseConfig
 
 class Config(BaseConfig):
     name = Path(__file__).parts[-1]
+    seed = 1234
 
     class Model(BaseConfig):
         architecture = MLP
@@ -55,7 +56,9 @@ class Config(BaseConfig):
                 momentum = 0.9
 
     class Logger(BaseConfig):
-        active = False
+        active = True
+        project = 'implicit-rep'
+        task = 'changed-input-half-random'
 
 
 if __name__ == '__main__':

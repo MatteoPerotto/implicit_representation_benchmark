@@ -1,24 +1,4 @@
-# import builtins
-#
-# _real_import = builtins.__import__
-#
-#
-# def my_import(name, globals=None, locals=None, fromlist=(), level=0):
-#     if name == 'noop':
-#         name = 'utils.noop'
-#         fromlist = tuple('NoOp' for _ in fromlist)
-#     print(fromlist, level)
-#     res = _real_import(name, globals, locals, fromlist, level)
-#     return res
-#
-#
-# builtins.__import__ = my_import
-#
 import abc
-
-
-def noop(*args, **kwargs):
-    return NoOp
 
 
 class NoOpMeta(abc.ABCMeta):

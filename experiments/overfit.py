@@ -13,6 +13,7 @@ from tqdm import trange
 
 from configs import Config
 from dataset.utils import sample_point_cloud_pc, check_occupancy
+from utils.reproducibility import make_reproducible
 
 if Config.Logger.active:
     from clearml import Task
@@ -24,7 +25,9 @@ from utils.scatter import pcs_to_plotly
 
 
 def main():
-    task = Task.init(project_name="implicit-rep", task_name="changed-input-half-random")
+    make_reproducible(Config.seed)
+
+    task = Task.init(project_name=Config.Logger.project, task_name=Config.Logger.task)
     task.connect(Config.to_dict())
     task.connect_configuration(Config.to_dict())
     logger = task.get_logger()
