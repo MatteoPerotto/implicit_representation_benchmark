@@ -1,3 +1,4 @@
+# import time
 from pathlib import Path
 
 import torch.nn
@@ -58,18 +59,11 @@ class Config(BaseConfig):
     class Logger(BaseConfig):
         active = True
         project = 'implicit-rep'
-        task = 'input0.5-0.0-random'
+        task = 'input0.5-0.0-random-3'
 
 
 if __name__ == '__main__':
-    import json
-
     Config.init()
-    # with open('configs/current.json', 'w') as fp:
-    #     json.dump(Config.to_dict(), fp)
-    #
-    # print(f'Configuration {Config.name} set as active. \n'
-    #       f'Re-run the script if you make any modification.')
 
     from experiments import overfit
     overfit.main()

@@ -1,19 +1,12 @@
+from configs import Config
+from utils.reproducibility import make_reproducible
 from pathlib import Path
-
-# import matplotlib as mpl
-# import matplotlib.pyplot as plt
-# mpl.use('Qt5Agg')
-# from mpl_toolkits.mplot3d import Axes3D
-# import plotly.express as px
 import numpy as np
 import torch
-from plotly.graph_objects import Scatter3d, Figure
 from torch.utils.data import DataLoader
 from tqdm import trange
 
-from configs import Config
 from dataset.utils import sample_point_cloud_pc, check_occupancy
-from utils.reproducibility import make_reproducible
 
 if Config.Logger.active:
     from clearml import Task
@@ -25,12 +18,15 @@ from utils.scatter import pcs_to_plotly
 
 
 def main():
-    make_reproducible(Config.seed)
-
     task = Task.init(project_name=Config.Logger.project, task_name=Config.Logger.task)
+    task.set_random_seed(Config.seed)
     task.connect(Config.to_dict())
     task.connect_configuration(Config.to_dict())
     logger = task.get_logger()
+
+    # This needs to be after task because it initializes
+    # its own seed overwriting the one we set
+    make_reproducible(Config.seed)
 
     ckpt_dir = Path(f'checkpoints/{task.id}')
     if ckpt_dir.exists():
