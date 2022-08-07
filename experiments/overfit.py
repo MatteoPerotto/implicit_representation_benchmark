@@ -76,10 +76,10 @@ def main():
             if torch.all(~positive_idxs):
                 positive_idxs[:, 0] = True
 
-            chamfer = metric(x[positive_idxs].unsqueeze(0), x[labels].unsqueeze(0))
+            chamfer_real = metric(x[positive_idxs].unsqueeze(0), x[labels].unsqueeze(0))
 
             logger.report_scalar('Loss', 'loss', loss.item(), i)
-            logger.report_scalar('Chamfer', 'chamfer', chamfer.item() * 100, i)
+            logger.report_scalar('Chamfer', 'chamfer', chamfer_real.item() * 100, i)
 
         if (i + 1) % 5000 == 0:
             with torch.no_grad():
@@ -127,9 +127,9 @@ def main():
                 logger.report_plotly("Point Clouds", "input points", fig)
 
             torch.save(model.state_dict(), ckpt_dir / 'latest.pth')
-            if best < chamfer:
+            if best > chamfer_real:
                 torch.save(model.state_dict(), ckpt_dir / 'best.pth')
-                best = chamfer
+                best = chamfer_real
 
         range.set_postfix(loss=loss.item())
 

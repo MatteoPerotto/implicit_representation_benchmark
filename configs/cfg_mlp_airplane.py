@@ -2,7 +2,7 @@
 from pathlib import Path
 
 import torch.nn
-from torch.optim import SGD
+from torch.optim import SGD, Adam
 
 from dataset import ShapeNetDataset
 from models.mlp import MLP
@@ -22,7 +22,7 @@ class Config(BaseConfig):
 
     class Data(BaseConfig):
         input_dimension = 16384 * 2
-        split = [0.5, 0.0, 0.5]
+        split = [0.0, 0.5, 0.5]
         noise_rate = 0.1
         tolerance = 0.001
 
@@ -50,16 +50,16 @@ class Config(BaseConfig):
         epochs = int(50_000)
 
         class Optim(BaseConfig):
-            optim = SGD
+            optim = Adam
 
             class Params(BaseConfig):
                 lr = 0.0001
-                momentum = 0.9
+                # momentum = 0.9
 
     class Logger(BaseConfig):
         active = True
         project = 'implicit-rep'
-        task = 'input0.5-0.0-random-3'
+        task = 'input[0.1-0.4]-adam-(1)'
 
 
 if __name__ == '__main__':
