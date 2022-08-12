@@ -18,6 +18,12 @@ from utils.scatter import pcs_to_plotly
 
 
 def main():
+    """It trains the specified model on a single shape until
+        the model becomes a representation of that shape.
+        Logging is done using ClearML: create an account and
+        set the credential to use it.
+    """
+
     task = Task.init(project_name=Config.Logger.project, task_name=Config.Logger.task)
     task.set_random_seed(Config.seed)
     task.connect(Config.to_dict())
@@ -64,72 +70,69 @@ def main():
                                           noise_rate=Data.noise_rate,
                                           tolerance=Data.tolerance)
 
-        predictions = model(x).squeeze(-1)
-        loss = Train.loss_fn(predictions, labels.float())
+        predictions, loss = model.step(x, labels, optimizer)
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        with torch.no_grad():
 
-        if (i + 1) % 1000 == 0:
-            positive_idxs = torch.sigmoid(predictions) > 0.7
-            if torch.all(~positive_idxs):
-                positive_idxs[:, 0] = True
-
-            chamfer_real = metric(x[positive_idxs].unsqueeze(0), x[labels].unsqueeze(0))
-
-            logger.report_scalar('Loss', 'loss', loss.item(), i)
-            logger.report_scalar('Chamfer', 'chamfer', chamfer_real.item() * 100, i)
-
-        if (i + 1) % 5000 == 0:
-            with torch.no_grad():
-                ###################################
-                ### Log classification of the input
-
+            if (i + 1) % 1000 == 0:
                 positive_idxs = torch.sigmoid(predictions) > 0.7
-
-                tp_idxs = positive_idxs & labels
-                fp_idxs = positive_idxs & ~labels
-                fn_idxs = labels & ~positive_idxs
-
                 if torch.all(~positive_idxs):
                     positive_idxs[:, 0] = True
 
-                chamfer = metric(x[positive_idxs].unsqueeze(0), x[labels].unsqueeze(0))
+                chamfer_real = metric(x[positive_idxs].unsqueeze(0), x[labels].unsqueeze(0))
 
-                pcs = [pc.cpu().numpy() for pc in [x[fn_idxs], x[tp_idxs], x[fp_idxs]]]
-                fig = pcs_to_plotly(pcs, colormaps=[[255, 255, 0], [0, 255, 0], [255, 0, 0]],
-                                    names=['false negatives', 'true_positives', 'false_positives'])
+                logger.report_scalar('Loss', 'loss', loss.item(), i)
+                logger.report_scalar('Chamfer', 'chamfer', chamfer_real.item() * 100, i)
 
-                logger.report_plotly("Point Clouds", "precision_recall", fig, i)
+            if (i + 1) % 5000 == 0:
+                with torch.no_grad():
+                    ###################################
+                    ### Log classification of the input
 
-                ###################################
-                ### Log decoded point cloud
-                final_pc, prob = model.to_pc(itr=20, thr=0.85, num_points=8192 * 2)
-                final_pc = final_pc.unsqueeze(0)
+                    positive_idxs = torch.sigmoid(predictions) > 0.7
 
-                precision_labels = check_occupancy(gt, final_pc, 0.001)  # points of the reconstruction close enough to gt
-                recall_labels = ~check_occupancy(final_pc, gt, 0.001) # points of gt not close to reconstruction
+                    tp_idxs = positive_idxs & labels
+                    fp_idxs = positive_idxs & ~labels
+                    fn_idxs = labels & ~positive_idxs
 
-                pcs = [pc.squeeze().cpu().numpy() for pc in [final_pc[precision_labels], final_pc[~precision_labels],
-                                                             gt[recall_labels]]]
-                fig = pcs_to_plotly(pcs, colormaps=[[0, 255, 0], [255, 0, 0], [0, 0, 255]],
-                                    names=['right', 'wrong', 'missed'], colors=[prob.cpu().numpy(), None])
+                    if torch.all(~positive_idxs):
+                        positive_idxs[:, 0] = True
 
-                logger.report_plotly("Point Clouds", "reconstruction", fig)
-                logger.report_scalar('Chamfer', 'real', metric(final_pc, gt) * 100, i)
+                    chamfer = metric(x[positive_idxs].unsqueeze(0), x[labels].unsqueeze(0))
 
-                ###################################
-                ### Log input
-                fig = pcs_to_plotly([x[labels].cpu().numpy(), x[~labels].cpu().numpy()],
-                                    colormaps=[[0, 255, 0], [255, 0, 0]],
-                                    names=['positive', 'negative'])
-                logger.report_plotly("Point Clouds", "input points", fig)
+                    pcs = [pc.cpu().numpy() for pc in [x[fn_idxs], x[tp_idxs], x[fp_idxs]]]
+                    fig = pcs_to_plotly(pcs, colormaps=[[255, 255, 0], [0, 255, 0], [255, 0, 0]],
+                                        names=['false negatives', 'true_positives', 'false_positives'])
 
-            torch.save(model.state_dict(), ckpt_dir / 'latest.pth')
-            if best > chamfer_real:
-                torch.save(model.state_dict(), ckpt_dir / 'best.pth')
-                best = chamfer_real
+                    logger.report_plotly("Point Clouds", "precision_recall", fig, i)
+
+                    ###################################
+                    ### Log decoded point cloud
+                    final_pc, prob = model.to_pc(itr=20, thr=0.85, num_points=8192 * 2)
+                    final_pc = final_pc.unsqueeze(0)
+
+                    precision_labels = check_occupancy(gt, final_pc, 0.001)  # points of the reconstruction close enough to gt
+                    recall_labels = ~check_occupancy(final_pc, gt, 0.001) # points of gt not close to reconstruction
+
+                    pcs = [pc.squeeze().cpu().numpy() for pc in [final_pc[precision_labels], final_pc[~precision_labels],
+                                                                 gt[recall_labels]]]
+                    fig = pcs_to_plotly(pcs, colormaps=[[0, 255, 0], [255, 0, 0], [0, 0, 255]],
+                                        names=['right', 'wrong', 'missed'], colors=[prob.cpu().numpy(), None])
+
+                    logger.report_plotly("Point Clouds", "reconstruction", fig, i)
+                    logger.report_scalar('Chamfer', 'real', metric(final_pc, gt) * 100, i)
+
+                    ###################################
+                    ### Log input
+                    fig = pcs_to_plotly([x[labels].cpu().numpy(), x[~labels].cpu().numpy()],
+                                        colormaps=[[0, 255, 0], [255, 0, 0]],
+                                        names=['positive', 'negative'])
+                    logger.report_plotly("Point Clouds", "input points", fig, i)
+
+                torch.save(model.state_dict(), ckpt_dir / 'latest.pth')
+                if best > chamfer_real:
+                    torch.save(model.state_dict(), ckpt_dir / 'best.pth')
+                    best = chamfer_real
 
         range.set_postfix(loss=loss.item())
 

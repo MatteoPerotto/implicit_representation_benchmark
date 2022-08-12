@@ -19,6 +19,9 @@ from utils.scatter import pcs_to_plotly
 
 
 def main():
+    """Just load a checkpoint and evaluate it on the
+        first element of the dataloader.
+    """
 
     Model = Config.Model
     Data = Config.Data
@@ -39,9 +42,6 @@ def main():
     metric = ChamferDistanceL1()
 
     final_pc, prob = model.to_pc(itr=20, thr=0.7, num_points=8192*2)
-
-    # pcs_to_plotly([final_pc.cpu().numpy(), gt.squeeze().cpu().numpy()], colormaps=['Viridis', [255, 255, 0]],
-    #                           names=['reconstruction', 'ground truth'], colors=[prob.cpu().numpy(), None]).show()
 
     print(metric(final_pc.unsqueeze(0), gt) * 100)
 

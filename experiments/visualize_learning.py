@@ -10,6 +10,9 @@ from dataset.utils import sample_point_cloud_pc
 from utils.visualization_vispy import Visualizer
 
 def main():
+    """This code shows how the predictions are updated
+        as the model learns how to reconstruct the shape
+    """
     Model = Config.Model
     Data = Config.Data
     Train = Config.Train

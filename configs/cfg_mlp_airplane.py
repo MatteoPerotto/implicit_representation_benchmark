@@ -18,11 +18,11 @@ class Config(BaseConfig):
 
         class Params(BaseConfig):
             num_layers = 16
-            layers_dim = [96] * 16
+            layers_dim = [96] * num_layers
 
     class Data(BaseConfig):
         input_dimension = 16384 * 2
-        split = [0.0, 0.5, 0.5]
+        split = [0.1, 0.4, 0.5]
         noise_rate = 0.1
         tolerance = 0.001
 
@@ -57,7 +57,7 @@ class Config(BaseConfig):
                 # momentum = 0.9
 
     class Logger(BaseConfig):
-        active = True
+        active = False
         project = 'implicit-rep'
         task = 'input[0.1-0.4]-adam-(1)'
 
