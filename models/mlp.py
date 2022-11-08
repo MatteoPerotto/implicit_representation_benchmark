@@ -6,14 +6,14 @@ from torch.optim import Adam
 
 class MLP(nn.Module):
 
-    def __init__(self, num_layers, layers_dim):
+    def __init__(self, input_size, output_size, num_layers, layers_dim):
         super().__init__()
 
         if not isinstance(layers_dim, list):
             layers_dim = [layers_dim] * num_layers
 
-        self.input_lyr = nn.Linear(3, layers_dim[0])
-        self.output_lyr = nn.Linear(layers_dim[-1], 1)
+        self.input_lyr = nn.Linear(input_size, layers_dim[0])
+        self.output_lyr = nn.Linear(layers_dim[-1], output_size)
 
         lyr_list = []
         for i in range(len(layers_dim) - 1):
