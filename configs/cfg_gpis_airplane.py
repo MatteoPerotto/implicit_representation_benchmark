@@ -2,7 +2,8 @@ import torch.nn
 from torch.optim import SGD
 
 from dataset import ShapeNetDataset
-from models.mlp import GPRegressionModel as GPIS
+from models.gpis import GPRegressionModel as GPIS
+from models.mlp import MLP
 from utils.base_config import BaseConfig
 
 
@@ -12,14 +13,13 @@ class Config(BaseConfig):
         architecture = GPIS
 
         class Params(BaseConfig):
-            num_layers = 2
-            layers_dim = [96] * 2
+
+            feature_extractor = MLP(input_size = 3, output_size = 10, num_layers = 1, layers_dim = [50])
+            likelihood = gpytorch.likelihoods.GaussianLikelihood()
+            likelihood.noise_covar.register_constraint("raw_noise", gpytorch.constraints.Positive())
+            scale_to_bounds = False
 
     class Data(BaseConfig):
-        input_dimension = 16384
-        split = [0.1, 0.4, 0.5]
-        noise_rate = 0.1
-        tolerance = 0.005
 
         class DataSet(BaseConfig):
             dataset = ShapeNetDataset
@@ -40,16 +40,21 @@ class Config(BaseConfig):
                 pin_memory = True
 
     class Train(BaseConfig):
-        loss_fn = torch.nn.BCEWithLogitsLoss()
+        loss_fn = gpytorch.mlls.ExactMarginalLogLikelihood()
         device = 'cuda'
-        epochs = int(1e4)
+        epochs = 300
 
         class Optim(BaseConfig):
-            optim = SGD
+            scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[25,50,100,200])
 
             class Params(BaseConfig):
-                lr = 0.01
-                momentum = 0.9
+                lr = 0.05
+
+        class Scheduler(BaseConfig):
+            scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[25,50,100,200])
+
+            class Params(BaseConfig):
+                milestones=[25,50,100,200]
 
 
 if __name__ == '__main__':
