@@ -42,7 +42,7 @@ class GPRegressionModel(gpytorch.models.ExactGP):
             res = {'predictions': predictionX[indexes,:].cpu().numpy(), 'variance': var,
                    'train': self.trainX[self.trainX[:, 0] == 0]}
         
-        return res, var 
+            return res, var
 
 class thinPlateModel(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood):

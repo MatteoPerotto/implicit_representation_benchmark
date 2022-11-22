@@ -2,6 +2,7 @@ import copy
 
 import numpy as np
 import torch
+from dataset import gpdata
 
 
 @torch.no_grad()
@@ -42,6 +43,19 @@ def sample_point_cloud_pc(pc, n_points=8192, dist=None, noise_rate=0.1, toleranc
         labels = torch.tensor(labels, dtype=torch.bool, device=pc.device).tile(pc.shape[0], 1)
 
     return points, labels
+
+def sample_point_cloud_gpis(pcd, trainN, outDim):
+
+    dataHandler = gpdata.GPdataHandler(pcd, trainN, outDim, distanceLabel=True)
+    trainMatXAll, trainMatYAll = dataHandler.genFromNormals()
+
+    Xt = torch.from_numpy(trainMatXAll).float()
+    Yt = torch.from_numpy(np.squeeze(trainMatYAll)).float()
+
+    Xt.requires_grad_(True)
+    Yt.requires_grad_(True)
+
+    return Xt, Yt
 
 
 def check_occupancy(reference, pc, voxel_size):

@@ -1,6 +1,7 @@
 import torch.nn
+import gpytorch 
 from torch.optim import SGD
-
+from torch.optim.lr_scheduler import MultiStepLR
 from dataset import ShapeNetDataset
 from models.gpis import GPRegressionModel as GPIS
 from models.mlp import MLP
@@ -25,7 +26,7 @@ class Config(BaseConfig):
             dataset = ShapeNetDataset
 
             class Params(BaseConfig):
-                root = '../pcr/data/PCN'
+                root = 'data/PCN'
                 split = 'PCN.json'
                 subset = 'train'
                 length = None
@@ -40,20 +41,20 @@ class Config(BaseConfig):
                 pin_memory = True
 
     class Train(BaseConfig):
-        loss_fn = gpytorch.mlls.ExactMarginalLogLikelihood()
         device = 'cuda'
         epochs = 300
 
         class Optim(BaseConfig):
-            scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[25,50,100,200])
+            optim = SGD
 
             class Params(BaseConfig):
                 lr = 0.05
 
-        class Scheduler(BaseConfig):
-            scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[25,50,100,200])
+        class Sched(BaseConfig):
+            sched = MultiStepLR
 
             class Params(BaseConfig):
+                optim = SGD
                 milestones=[25,50,100,200]
 
 

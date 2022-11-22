@@ -1,1 +1,1 @@
-from .cfg_mlp_airplane import Config
+from .cfg_gpis_airplane import Config

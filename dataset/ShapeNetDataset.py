@@ -4,6 +4,7 @@ import numpy as np
 import open3d
 import torch.utils.data as data
 import json
+import os
 
 
 class ShapeNetDataset(data.Dataset):
@@ -17,12 +18,19 @@ class ShapeNetDataset(data.Dataset):
         with self.splits_path.open() as f:
             self.splits = json.load(f)
 
+        allowed_el = []
+        for subdir, dirs, files in os.walk(self.root / self.subset / f'complete'):
+            for file in files:
+                allowed_el.append(file.split('.')[0])
+
         samples = []
         for category in self.splits:
             for el in category[subset]:
-                samples += [f'{category["taxonomy_id"]}/{el}']
+                if el in allowed_el:
+                    samples += [f'{category["taxonomy_id"]}/{el}']
+                
         self.samples = np.array(samples)
-
+        
         if pick is not None:
             self.samples = self.samples[pick]
 
