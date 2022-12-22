@@ -6,7 +6,7 @@ class GPRegressionModel(gpytorch.models.ExactGP):
     def __init__(self, feature_extractor, train_x, train_y, likelihood, scale_to_bounds = False):
         super(GPRegressionModel, self).__init__(train_x, train_y, likelihood)
         self.mean_module = gpytorch.means.ConstantMean()
-        self.covar_module = myGPs.ThinPlateRegularizer()
+        self.covar_module = ThinPlateRegularizer()
         self.feature_extractor = feature_extractor
 
         # This module will scale the NN features so that they're nice values
@@ -24,7 +24,7 @@ class GPRegressionModel(gpytorch.models.ExactGP):
         covar_x = self.covar_module(projected_x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
-    def to_pc(self,predictionX):
+    def to_pc(self,predictionX): 
        with torch.no_grad(), gpytorch.settings.use_toeplitz(False), gpytorch.settings.fast_pred_var():
 
             preds = self.likelihood(self.model(predictionX))
@@ -112,4 +112,3 @@ class ThinPlateRegularizer(gpytorch.kernels.Kernel):
         if diag:
             tp = tp[0]
         return tp
-

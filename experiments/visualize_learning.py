@@ -11,6 +11,10 @@ from utils.visualization_vispy import Visualizer
 import open3d as o3d 
 import torch 
 
+import gpytorch 
+from models.gpis import GPRegressionModel as GPIS
+from models.mlp import MLP
+
 def main():
     """This code shows how the predictions are updated
         as the model learns how to reconstruct the shape
@@ -18,7 +22,7 @@ def main():
     Model = Config.Model
     Data = Config.Data
     Train = Config.Train
-
+    Sched = Config.Sched
     
     dataset = Data.DataSet.dataset(**Config.Data.DataSet.Params.to_dict())
     dataloader = DataLoader(dataset, **Config.Data.DataLoader.Params.to_dict())
@@ -40,9 +44,17 @@ def main():
         print(labels.shape)
 
         model_arg = Config.Model.Params.to_dict()
-        model_arg.update({'train_x':'x', 'train_y':'labels'})
         print(model_arg)
-        model = Model.architecture(**model_arg)
+        model_arg.update({'train_x': x, 'train_y':labels})
+        #print(model_arg)
+        #model = Model.architecture(**model_arg)
+
+        likelihood = gpytorch.likelihoods.GaussianLikelihood()
+        likelihood.noise_covar.register_constraint("raw_noise", gpytorch.constraints.Positive())
+
+        feature_extractor = MLP(input_size = 3, output_size = 10, num_layers = 1, layers_dim = [50])
+
+        model = GPIS(feature_extractor, x, labels, likelihood)
 
         hypers = {
         'likelihood.noise_covar.noise': torch.tensor(1e-4), 
@@ -51,7 +63,7 @@ def main():
         model.initialize(**hypers)  # the model is re-initialized before learning a new shape
 
         optimizer = Train.Optim.optim(model.parameters(), **Train.Optim.Params.to_dict())
-        scheduler = Train.Sched.sched(**Sched.sched.Params.to_dict())
+        scheduler = Sched.sched(**Sched.Params.to_dict())
         
         range = trange(Train.epochs)
         for _ in range:
